@@ -1,0 +1,2 @@
+../Core/Src/user_interface/led.c:10:5:led_init	1
+../Core/Src/user_interface/led.c:14:5:led_control	5
