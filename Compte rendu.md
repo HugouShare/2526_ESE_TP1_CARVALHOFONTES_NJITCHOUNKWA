@@ -1,4 +1,4 @@
-# Rapport de TP  
+![PXL_20251204_095942142](https://github.com/user-attachments/assets/6e7f95ec-1f70-4936-9941-76b0ba7d6340)![PXL_20251204_095913614](https://github.com/user-attachments/assets/1a15c71a-c52a-4e82-9ebf-a69ac34fe265)# Rapport de TP  
 
 ## Général  
 
@@ -41,18 +41,16 @@ Nous choisissons donc le temps mort le plus contraignant soit 170ns.
 
 #### Calcul des paramètres afin d'avoir une résolution minimale de 10 bits  
 
-Afin d'avoir une résolution minimale de 10 bits, nous devons verifier l'inégalité suivante :  
-ARR + 1 >= 2^10 (= 1024)  
-Nous choisissons donc ARR = 1023.  
-
-Comme nous voulons obtenir une PWM de fréquence 20kHz.  
-Nous choisissons donc PSC = 7.30  soit 7.  
+Afin d'avoir une résolution minimale de 10 bits, nous voulons vérifier : ARR+1 >= 2^10 = 1024. De plus, nous voulons une fréquence de PWM égale à 20kHz.  
+Nous avons alors (PSC+1).(ARR+1).2 = fCPU/fTIM = 170MHz/20kHz.    
+Nous choisissons PSC+1= 1 => **PSC = 0**.  
+D'où, il vient : (ARR+1).2 = fCPU/fTIM = 8500 => **ARR = 4250**.  
 
 #### Ecriture du code  
 
 Nous configurons donc le fichier .ioc en apportant les modifications suivantes :  
-- **ARR+1 = 1024**
-- **PSC+1 = 8**
+- **ARR+1 = 4250**
+- **PSC+1 = 1**
 - **Center-edge aligned mode 3** (PWMs centrées et compare up & down)
 - Dead-time de 170ns
   - Nous avons tDTS = 1/170MHz = 5.88ns
@@ -60,6 +58,22 @@ Nous configurons donc le fichier .ioc en apportant les modifications suivantes :
   - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone et la valeur à inscrire est donc bien** 29**
 
 Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 60%.  
+Les fonctions utiles sont donc les suivantes :  
+- PWM_Init() : permet d'initialiser les PWMs
+- PWM_RapportCyclique60() : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 60%  
+
+#### Analyse à l'oscilloscope  
+
+Nous utilisons une carte NUCLEO-G474RE. Voici le pinout :  
+<img width="474" height="474" alt="OIP M19V6Q1KuxN2mdSN2n9ECAHaHa" src="https://github.com/user-attachments/assets/0bd9e742-f743-4030-ae13-04fcb33429a7" />
+
+A l'oscilloscope, nous obtenons alors le résultat suivant :  
+![PXL_20251204_095913614](https://github.com/user-attachments/assets/0dd267ec-db8e-4371-ac0e-0158c1fd6478)  
+![PXL_20251204_095942142](https://github.com/user-attachments/assets/98fc4f27-1443-4f46-a9e3-3b39c2b08dae)  
+
+Nous obtenons donc bien les résultats souhaités.  
+
+### Commande de vitesse  
 
 
 
