@@ -6,6 +6,8 @@
  */
 
 #include "user_interface/shell.h"
+#include "motor_control/motor.h"
+#include "stdlib.h"
 
 h_shell_t hshell1;
 
@@ -81,9 +83,6 @@ static int sh_test_list(h_shell_t* h_shell, int argc, char** argv)
 	}
 	return 0;
 }
-
-
-
 
 /**
  * @brief Initializes the shell instance.

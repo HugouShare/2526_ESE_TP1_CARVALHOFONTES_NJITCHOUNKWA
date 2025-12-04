@@ -1,0 +1,4 @@
+../Core/Src/motor_control/motor.c:19:5:motor_init	8	static
+../Core/Src/motor_control/motor.c:29:6:motor_rapport_cyclique_60	4	static
+../Core/Src/motor_control/motor.c:35:6:motor_control	24	static
+../Core/Src/motor_control/motor.c:45:5:motor_set_ccr	40	static

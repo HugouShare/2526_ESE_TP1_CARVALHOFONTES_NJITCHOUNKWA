@@ -27,7 +27,7 @@ void init_device(void){
 //
 // Initialisation motor control
 	// MOTOR
-//	motor_init();
+	motor_init();
 	// ASSERV (PID)
 //	asserv_init();
 //
@@ -50,14 +50,17 @@ uint8_t shell_uart2_receive(char *pData, uint16_t size)
 	return 1;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart->Instance == USART2) {
-		//		HAL_UART_Transmit(&huart2, (uint8_t *)&shell_uart2_received_char, 1, HAL_MAX_DELAY);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART2)
+	{
+		// HAL_UART_Transmit(&huart2, (uint8_t *)&shell_uart2_received_char, 1, HAL_MAX_DELAY);
 		HAL_UART_Receive_IT(&huart2, (uint8_t *)&shell_uart2_received_char, 1);
 		shell_run(&hshell1);
 	}
 }
 
-void loop(){
-
+void loop()
+{
+	// Currently empty
 }
