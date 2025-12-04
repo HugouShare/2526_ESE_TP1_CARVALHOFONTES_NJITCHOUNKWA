@@ -1,4 +1,4 @@
-![PXL_20251204_095942142](https://github.com/user-attachments/assets/6e7f95ec-1f70-4936-9941-76b0ba7d6340)![PXL_20251204_095913614](https://github.com/user-attachments/assets/1a15c71a-c52a-4e82-9ebf-a69ac34fe265)# Rapport de TP  
+# Rapport de TP  
 
 ## Général  
 
