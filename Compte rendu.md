@@ -50,6 +50,17 @@ Nous choisissons donc PSC = 7.30  soit 7.
 
 #### Ecriture du code  
 
+Nous configurons donc le fichier .ioc en apportant les modifications suivantes :  
+- **ARR+1 = 1024**
+- **PSC+1 = 8**
+- **Center-edge aligned mode 3** (PWMs centrées et compare up & down)
+- Dead-time de 170ns
+  - Nous avons tDTS = 1/170MHz = 5.88ns
+  - 170ns/5.88ns ≃ 29
+  - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone et la valeur à inscrire est donc bien** 29**
+
+Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 60%.  
+
 
 
 
