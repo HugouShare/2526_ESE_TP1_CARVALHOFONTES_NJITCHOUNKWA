@@ -28,4 +28,30 @@ Notre cahier des charges est le suivant :
 - Temps mort minimum : à voir selon la datasheet des transistors (faire valider la valeur)
 - Résolution minimum : 10bits.
 
-Les transistors que nous allons 
+#### Temps mort minimum  
+
+Les transistors que nous allons commander sont les IRF540N.  
+D'après leur datasheet, nous obtenons les informations suivantes :  
+<img width="640" height="563" alt="image" src="https://github.com/user-attachments/assets/7fd0d88c-8b12-435d-980f-849f29509e01" />  
+Nous avons :  
+- Turn-ON delay time + Rise time = 46ns
+- Turn-OFF delay time + Fall time = 74ns
+- Reverse recovery time = 170ns (max)
+Nous choisissons donc le temps mort le plus contraignant soit 170ns.
+
+#### Calcul des paramètres afin d'avoir une résolution minimale de 10 bits  
+
+Afin d'avoir une résolution minimale de 10 bits, nous devons verifier l'inégalité suivante :  
+ARR + 1 >= 2^10 (= 1024)  
+Nous choisissons donc ARR = 1023.  
+
+Comme nous voulons obtenir une PWM de fréquence 20kHz.  
+Nous choisissons donc PSC = 7.30  soit 7.  
+
+#### Ecriture du code  
+
+
+
+
+
+
