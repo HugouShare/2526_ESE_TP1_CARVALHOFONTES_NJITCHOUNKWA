@@ -42,9 +42,13 @@ Nous choisissons donc le temps mort le plus contraignant soit 170ns.
 #### Calcul des paramètres afin d'avoir une résolution minimale de 10 bits  
 
 Afin d'avoir une résolution minimale de 10 bits, nous voulons vérifier : ARR+1 >= 2^10 = 1024. De plus, nous voulons une fréquence de PWM égale à 20kHz.  
-Nous avons alors (PSC+1).(ARR+1).2 = fCPU/fTIM = 170MHz/20kHz.    
-Nous choisissons PSC+1= 1 => **PSC = 0**.  
-D'où, il vient : (ARR+1).2 = fCPU/fTIM = 8500 => **ARR = 4250**.  
+Nous avons alors (PSC+1).(ARR+1).2 = fCPU/fTIM = 170MHz/20kHz.  
+_Remarque : le x2 ci-dessus provient du fait que nous sommes en mode center-aligned. Pour plus d'informations regarder "Rappel"._  
+Nous choisissons PSC+1 = 1 => **PSC = 1-1**.  
+D'où, il vient : (ARR+1).2 = fCPU/fTIM = 8500 => **ARR = 4250-1**.  
+
+Rappel :  
+![5023790e-cd04-47f0-ae8b-94e9d88e5b23~1](https://github.com/user-attachments/assets/441d6d71-ffc7-4299-837c-d86731694fb7)  
 
 #### Ecriture du code  
 
@@ -55,12 +59,12 @@ Nous configurons donc le fichier .ioc en apportant les modifications suivantes :
 - Dead-time de 170ns
   - Nous avons tDTS = 1/170MHz = 5.88ns
   - 170ns/5.88ns ≃ 29
-  - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone et la valeur à inscrire est donc bien** 29**
+  - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone 1 et la valeur à inscrire est donc bien **29**  
 
 Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 60%.  
 Les fonctions utiles sont donc les suivantes :  
-- PWM_Init() : permet d'initialiser les PWMs
-- PWM_RapportCyclique60() : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 60%  
+- motor_init() : permet de lancer les TIMERs en mode PWM et PWMN, ainsi que d'établir une commande complémentaire décalée avec un rapport de cyclique de 60%
+- motor_rapport_cyclique_60() : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 60%   
 
 #### Analyse à l'oscilloscope  
 
@@ -71,12 +75,29 @@ A l'oscilloscope, nous obtenons alors le résultat suivant :
 ![PXL_20251204_095913614](https://github.com/user-attachments/assets/0dd267ec-db8e-4371-ac0e-0158c1fd6478)  
 ![PXL_20251204_095942142](https://github.com/user-attachments/assets/98fc4f27-1443-4f46-a9e3-3b39c2b08dae)  
 
-Nous obtenons donc bien les résultats souhaités.  
+Nous obtenons donc bien les résultats souhaités : un temps mort d'environ 170ns et une commande complémentaire décalée avec un rapport cyclique d'environ 60%.  
 
 ### Commande de vitesse  
 
+Nous souhaitons maintenant pouvoir configurer la valeur de CCR via le shell directement en tapant : SETCCR XXXX où :  
+- SETCCR : nom de la commande du shell
+- XXXX : valeur de CCR1 que l'on souhaite imposer
 
+Pour ce faire, nous ajoutons les fonctions suivantes :  
+- motor_control(int SET_CCR) : permet de configurer la valeur de CCR1 et par conséquent celle de CCR2 via la relation ARR = CCR1 + CCR2
+- int motor_set_ccr(h_shell_t* h_shell, int argc, char** argv) : fonction appelée via le shell et permettant de configurer la valeur de CCR
 
+Dans les grandes lignes, le fonctionnement de la fonction motor_set_ccr est le suivant :  
+- 1 : on vérifie que deux arguments ont bien été donnés lors de l'appel à cette fonction
+- 2 : si la valeur de CCR indiquée est trop grande, on modifie CCR à la valeur maximale en l'indiquant à l'utilisateur
+- 3 : si la valeur de CCR indiquée est inférieure à 0, on n'apporte aucune modification en l'indiquant à l'utilisateur
+- 4 : si la valeur de CCR se situe entre 0 et la valeur maximale, on configure CCR à la valeur souhaitée
+- 5 : si aucun des cas ci-dessus n'a été vérifié, on retourne un message d'erreur spécifiant la formulation exacte permettant l'utilisation de cette fonction
 
+### Premiers tests  
 
+Avant de procéder aux essais sur moteur, nous procédons aux essais sur carte directement et observons les signaux de PWMs à l'oscilloscope.  
 
+Nous testons d'abord en configurant, via le shell, la valeur de CCR de sorte à obtenir un rapport cyclique de 50%, puis de 70%.  
+Les résultats sont les suivants :  
+§§§§§§§§§§§§§§§§§§§§§§§§§§§§ A CONTINUER §§§§§§§§§§§§§§§§§§§§§§§§§§§§
