@@ -100,9 +100,20 @@ Dans les grandes lignes, le fonctionnement de la fonction motor_set_ccr est le s
 
 Avant de procéder aux essais sur moteur, nous procédons aux essais sur carte directement et observons les signaux de PWMs à l'oscilloscope.  
 
-Nous testons d'abord en configurant, via le shell, la valeur de CCR de sorte à obtenir un rapport cyclique de 50%, puis de 70%.  
+Nous testons d'abord en configurant, via le shell, la valeur de CCR de sorte à obtenir un rapport cyclique de 50%, puis de 25% et 80%.  
 Les résultats sont les suivants :  
-§§§§§§§§§§§§§§§§§§§§§§§§§§§§ A CONTINUER §§§§§§§§§§§§§§§§§§§§§§§§§§§§  
+
+Après exécution du code, sans avoir entrer de commande permettant de modifier la valeur de CCR via le shell, nous avons par défaut un rapport cyclique de 50%.  
+Nous obtenons alors le résultat suivant :  
+![PXL_20251212_132147944](https://github.com/user-attachments/assets/bb764012-49a6-42a6-945c-090823625f30)  
+
+Après avoir entré la commande ```setccr 1000``` dans le shell (soit un rapport cyclique de 25% environ), nous obtenons :  
+![PXL_20251212_132203651](https://github.com/user-attachments/assets/84431c84-df79-4d0b-b253-671cf31fb776)  
+
+Enfin, après avoir entré la commande ```setccr 3500``` dans le shell (soit un rapport cyclique de 80% environ), nous obtenons :  
+![PXL_20251212_132219742](https://github.com/user-attachments/assets/4b06d9a3-8d49-49e6-add5-2429cf2682af)  
+
+Nous obtenons donc des résultats très satisfaisants.  
 
 ## Commande en boucle ouverte, mesure de courant et de vitesse  
 
