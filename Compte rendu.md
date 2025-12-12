@@ -119,4 +119,37 @@ Nous obtenons donc des résultats très satisfaisants.
 
 ### Commande de la vitesse  
 
+Nous ajoutons maintenant les deux fonctionnalités suivantes :  
+
+```C
+motor_start
+```
+Dans laquelle on écrit le code suivant :  
+```C
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+motor_rapport_cyclique_50();
+return shell_add(&hshell1, "startmotor", motor_start, "Start motor");
+```
+Cette fonctionnalité permet donc de lancer les PWMs et de configurer le rapport cyclique à 50%.  
+
+```C
+motor_stop
+```
+Dans laquelle on écrit le code suivant :  
+```C
+HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+return shell_add(&hshell1, "stopmotor", motor_stop, "Stop motor");
+```
+Cette fonctionnalité permet d'arrêter la génération de PWMs.  
+
+### Mesure de courant  
+
+dcsdcsd
+
 
