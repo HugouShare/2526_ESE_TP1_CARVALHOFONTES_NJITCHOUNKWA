@@ -1,5 +1,7 @@
 # Rapport de TP  
 
+Lien vers le sujet de TP : [Sujet de TP](https://moodle.ensea.fr/mod/book/view.php?id=27299&chapterid=476)   
+
 ## Général  
 
 Notre montage de controle est le suivant :  
@@ -100,4 +102,10 @@ Avant de procéder aux essais sur moteur, nous procédons aux essais sur carte d
 
 Nous testons d'abord en configurant, via le shell, la valeur de CCR de sorte à obtenir un rapport cyclique de 50%, puis de 70%.  
 Les résultats sont les suivants :  
-§§§§§§§§§§§§§§§§§§§§§§§§§§§§ A CONTINUER §§§§§§§§§§§§§§§§§§§§§§§§§§§§
+§§§§§§§§§§§§§§§§§§§§§§§§§§§§ A CONTINUER §§§§§§§§§§§§§§§§§§§§§§§§§§§§  
+
+## Commande en boucle ouverte, mesure de courant et de vitesse  
+
+### Commande de la vitesse  
+
+
