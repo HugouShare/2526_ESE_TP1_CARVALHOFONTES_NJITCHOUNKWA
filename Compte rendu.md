@@ -26,28 +26,32 @@ Nos objectifs sont les suivants :
 Dans un premier temps, nous générons quatres PWMs afin de pouvoir controler le hacheur.  
 
 Notre cahier des charges est le suivant :  
+```
 - Fréquence de la PWM : 20kHz
 - Temps mort minimum : à voir selon la datasheet des transistors (faire valider la valeur)
 - Résolution minimum : 10bits.
+```  
 
 #### Temps mort minimum  
 
-Les transistors que nous allons commander sont les IRF540N.  
+Les transistors que nous allons commander sont les ```IRF540N```.  
 D'après leur datasheet, nous obtenons les informations suivantes :  
 <img width="640" height="563" alt="image" src="https://github.com/user-attachments/assets/7fd0d88c-8b12-435d-980f-849f29509e01" />  
 Nous avons :  
 - Turn-ON delay time + Rise time = 46ns
 - Turn-OFF delay time + Fall time = 74ns
 - Reverse recovery time = 170ns (max)
+
 Nous choisissons donc le temps mort le plus contraignant soit 170ns.
 
 #### Calcul des paramètres afin d'avoir une résolution minimale de 10 bits  
 
-Afin d'avoir une résolution minimale de 10 bits, nous voulons vérifier : ARR+1 >= 2^10 = 1024. De plus, nous voulons une fréquence de PWM égale à 20kHz.  
-Nous avons alors (PSC+1).(ARR+1).2 = fCPU/fTIM = 170MHz/20kHz.  
-_Remarque : le x2 ci-dessus provient du fait que nous sommes en mode center-aligned. Pour plus d'informations regarder "Rappel"._  
-Nous choisissons PSC+1 = 1 => **PSC = 1-1**.  
-D'où, il vient : (ARR+1).2 = fCPU/fTIM = 8500 => **ARR = 4250-1**.  
+Afin d'avoir une résolution minimale de 10 bits, nous voulons vérifier : ```ARR+1 >= 2^10 = 1024```.  
+De plus, nous voulons une fréquence de PWM égale à 20kHz. Nous avons alors ```(PSC+1).(ARR+1).2 = fCPU/fTIM = 170MHz/20kHz```.  
+> Remarque : le x2 ci-dessus provient du fait que nous sommes en mode center-aligned. Pour plus d'informations regarder "Rappel".  
+
+Nous choisissons PSC+1 = 1 => ```PSC = 1-1```.  
+D'où, il vient : (ARR+1).2 = fCPU/fTIM = 8500 => ```ARR = 4250-1```.  
 
 Rappel :  
 ![5023790e-cd04-47f0-ae8b-94e9d88e5b23~1](https://github.com/user-attachments/assets/441d6d71-ffc7-4299-837c-d86731694fb7)  
@@ -55,6 +59,7 @@ Rappel :
 #### Ecriture du code  
 
 Nous configurons donc le fichier .ioc en apportant les modifications suivantes :  
+```
 - **ARR+1 = 4250**
 - **PSC+1 = 1**
 - **Center-edge aligned mode 3** (PWMs centrées et compare up & down)
@@ -62,32 +67,33 @@ Nous configurons donc le fichier .ioc en apportant les modifications suivantes :
   - Nous avons tDTS = 1/170MHz = 5.88ns
   - 170ns/5.88ns ≃ 29
   - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone 1 et la valeur à inscrire est donc bien **29**  
+```  
 
 Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 60%.  
 Les fonctions utiles sont donc les suivantes :  
-- motor_init() : permet de lancer les TIMERs en mode PWM et PWMN, ainsi que d'établir une commande complémentaire décalée avec un rapport de cyclique de 60%
-- motor_rapport_cyclique_60() : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 60%   
+- ```motor_init()``` : permet de lancer les TIMERs en mode PWM et PWMN, ainsi que d'établir une commande complémentaire décalée avec un rapport de cyclique de 50%
+- ```motor_rapport_cyclique_50()``` : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 50%   
 
 #### Analyse à l'oscilloscope  
 
-Nous utilisons une carte NUCLEO-G474RE. Voici le pinout :  
+Nous utilisons une carte ```NUCLEO-G474RE```. Voici le pinout :  
 <img width="474" height="474" alt="OIP M19V6Q1KuxN2mdSN2n9ECAHaHa" src="https://github.com/user-attachments/assets/0bd9e742-f743-4030-ae13-04fcb33429a7" />
 
 A l'oscilloscope, nous obtenons alors le résultat suivant :  
 ![PXL_20251204_095913614](https://github.com/user-attachments/assets/0dd267ec-db8e-4371-ac0e-0158c1fd6478)  
 ![PXL_20251204_095942142](https://github.com/user-attachments/assets/98fc4f27-1443-4f46-a9e3-3b39c2b08dae)  
 
-Nous obtenons donc bien les résultats souhaités : un temps mort d'environ 170ns et une commande complémentaire décalée avec un rapport cyclique d'environ 60%.  
+Nous obtenons donc bien les résultats souhaités : un temps mort d'environ 170ns et une commande complémentaire décalée avec un rapport cyclique d'environ 50%.  
 
 ### Commande de vitesse  
 
-Nous souhaitons maintenant pouvoir configurer la valeur de CCR via le shell directement en tapant : SETCCR XXXX où :  
+Nous souhaitons maintenant pouvoir configurer la valeur de CCR via le shell directement en tapant : ```SETCCR XXXX``` où :  
 - SETCCR : nom de la commande du shell
 - XXXX : valeur de CCR1 que l'on souhaite imposer
 
 Pour ce faire, nous ajoutons les fonctions suivantes :  
-- motor_control(int SET_CCR) : permet de configurer la valeur de CCR1 et par conséquent celle de CCR2 via la relation ARR = CCR1 + CCR2
-- int motor_set_ccr(h_shell_t* h_shell, int argc, char** argv) : fonction appelée via le shell et permettant de configurer la valeur de CCR
+- ```motor_control(int SET_CCR)``` : permet de configurer la valeur de CCR1 et par conséquent celle de CCR2 via la relation ARR = CCR1 + CCR2
+- ```int motor_set_ccr(h_shell_t* h_shell, int argc, char** argv)``` : fonction appelée via le shell et permettant de configurer la valeur de CCR
 
 Dans les grandes lignes, le fonctionnement de la fonction motor_set_ccr est le suivant :  
 - 1 : on vérifie que deux arguments ont bien été donnés lors de l'appel à cette fonction
@@ -101,7 +107,6 @@ Dans les grandes lignes, le fonctionnement de la fonction motor_set_ccr est le s
 Avant de procéder aux essais sur moteur, nous procédons aux essais sur carte directement et observons les signaux de PWMs à l'oscilloscope.  
 
 Nous testons d'abord en configurant, via le shell, la valeur de CCR de sorte à obtenir un rapport cyclique de 50%, puis de 25% et 80%.  
-Les résultats sont les suivants :  
 
 Après exécution du code, sans avoir entrer de commande permettant de modifier la valeur de CCR via le shell, nous avons par défaut un rapport cyclique de 50%.  
 Nous obtenons alors le résultat suivant :  
@@ -126,30 +131,114 @@ motor_start
 ```
 Dans laquelle on écrit le code suivant :  
 ```C
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
-HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-motor_rapport_cyclique_50();
-return shell_add(&hshell1, "startmotor", motor_start, "Start motor");
+int motor_start (h_shell_t* h_shell, int argc, char** argv)
+{
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+	motor_rapport_cyclique_50();
+	return HAL_OK;
+}
 ```
 Cette fonctionnalité permet donc de lancer les PWMs et de configurer le rapport cyclique à 50%.  
 
+Ainsi que :  
 ```C
 motor_stop
 ```
 Dans laquelle on écrit le code suivant :  
 ```C
-HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
-HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
-return shell_add(&hshell1, "stopmotor", motor_stop, "Stop motor");
+int motor_stop (h_shell_t* h_shell, int argc, char** argv)
+{
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+	HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+	HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+	return HAL_OK;
+}
 ```
 Cette fonctionnalité permet d'arrêter la génération de PWMs.  
 
 ### Mesure de courant  
 
-dcsdcsd
+D'après le fichier KiCad, nous obtenons :  
+<img width="453" height="547" alt="image" src="https://github.com/user-attachments/assets/94dc6368-d55e-4cce-845e-1e75e9a23aef" />  
+Les courants à mesurer sont donc :  
+- U_Imes
+- V_Imes
+- W_Imes
 
+Dans notre cas à nous, nous n'utilisons que deux phases et nous avons seulement U_Imes à mesurer (puisque U_Imes = - V_Imes).
 
+Le module que nous utilisons afin de mesurer le courant est le ```GO 10-SME/SP3```. Sa datasheet est fournie dans le dossier _Ressources_.  
+D'après celle-ci, nous pouvons alors déterminer la fonction de transfert suivante :  
+```
+I_mes = (V_mes-1.65)/0.05
+```
+De fait : 
+- Le capteur fonctionne de manière linéaire entre la tension mesurée et le courant mesuré.
+- La plage de fonctionnement du capteur est [0;3.3V]. Nous prenons donc la moitié de cette plage de fonctionnement : 1.65V.
+- Le coefficient de proportionnalité vaut Sn = 0.05 V/A
+D'où la fonction de transfert donnée.
+
+D'après le fichier KiCad, nous obtenons les informations suivantes :  
+<img width="1278" height="564" alt="image" src="https://github.com/user-attachments/assets/a17b7a5e-6fd2-43bf-af83-01411eaf255e" />  
+Nous utilisons donc le ```PIN PA1``` afin de procéder à la mesure de U_Imes.  
+
+##### Mesure du courant par polling  
+
+Nous commençons dans un premier temps par réaliser la fonction ```input_analog_init``` d'initialisation des mesures ADC :  
+```C
+int	input_analog_init(void)
+{
+	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+    if (HAL_ADC_Start(&hadc1) != HAL_OK)
+    {
+        return HAL_ERROR;
+    }
+    shell_add(&hshell1, "getcurrent", input_analog_get_current, "Get current");
+    return HAL_OK;
+
+}
+```
+
+Afin de pouvoir déclencher une mesure de courant depuis le shell immédiatement, nous créons ensuite la fonction ```input_analog_get_current``` :  
+```C
+int input_analog_get_current(h_shell_t* h_shell, int argc, char** argv)
+{
+	int size;
+
+	if(argc!=1)
+	{
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrent\r\n");
+		h_shell->drv.transmit(h_shell->print_buffer, size);
+		return HAL_ERROR;
+	}
+
+	float measured_current = measure_current_polling();
+	size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "measured_current: %f \n\r", measured_current);
+	h_shell->drv.transmit(h_shell->print_buffer, size);
+	return HAL_OK;
+}
+```
+
+Pour finir, afin de réaliser une mesure de courant via l'ADC nous écrivons la fonction ```measure_current_polling``` :  
+```C
+float measure_current_polling(void)
+{
+    uint32_t raw;
+    float v_meas, i_meas;
+
+    raw = HAL_ADC_GetValue(&hadc1);
+
+    v_meas = ((float)raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
+    i_meas = (v_meas-1.47)/0.05;                      // courant en A
+
+    return i_meas;
+}
+```
+L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, on la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
+> NOTE : Après plusieurs essais, nous observons une erreur constante introduite dans les mesures. Nous modifions donc la méthode de calcul du courant en passant du seuil milieu de 3.3V à un seuil personalisé.
+
+$$$$$$$$$$$$$ SUITE $$$$$$$$$$$
