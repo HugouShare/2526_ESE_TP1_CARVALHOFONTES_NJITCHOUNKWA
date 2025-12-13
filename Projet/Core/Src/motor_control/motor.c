@@ -22,14 +22,16 @@ int motor_init (void)
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	motor_rapport_cyclique_60();
-	return shell_add(&hshell1, "setccr", motor_set_ccr, "Set CCR");
+	motor_rapport_cyclique_50();
+	shell_add(&hshell1, "startmotor", motor_start, "Start motor");
+	shell_add(&hshell1, "stopmotor", motor_stop, "Stop motor");
+	return 1;
 }
 
-void motor_rapport_cyclique_60 (void)
+void motor_rapport_cyclique_50 (void)
 {
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2250);
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1700);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2125);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 2125);
 }
 
 void motor_control (int SET_CCR)
@@ -76,4 +78,23 @@ int motor_set_ccr(h_shell_t* h_shell, int argc, char** argv)
 	size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 2 arguments : SETCCR XXXX\r\n");
 	h_shell->drv.transmit(h_shell->print_buffer, size);
 	return HAL_ERROR;
+}
+
+int motor_start (h_shell_t* h_shell, int argc, char** argv)
+{
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+	motor_rapport_cyclique_50();
+	return HAL_OK;
+}
+
+int motor_stop (h_shell_t* h_shell, int argc, char** argv)
+{
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
+	HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
+	HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+	return HAL_OK;
 }

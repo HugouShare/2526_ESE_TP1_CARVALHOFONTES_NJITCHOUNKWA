@@ -1,4 +1,6 @@
 ../Core/Src/motor_control/motor.c:19:5:motor_init	1
-../Core/Src/motor_control/motor.c:29:6:motor_rapport_cyclique_60	1
-../Core/Src/motor_control/motor.c:35:6:motor_control	1
-../Core/Src/motor_control/motor.c:45:5:motor_set_ccr	6
+../Core/Src/motor_control/motor.c:31:6:motor_rapport_cyclique_50	1
+../Core/Src/motor_control/motor.c:37:6:motor_control	1
+../Core/Src/motor_control/motor.c:47:5:motor_set_ccr	6
+../Core/Src/motor_control/motor.c:83:5:motor_start	1
+../Core/Src/motor_control/motor.c:93:5:motor_stop	1

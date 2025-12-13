@@ -7,7 +7,8 @@
 
 #include "user_interface/led.h"
 
-int led_init(){
+int led_init()
+{
 	return shell_add(&hshell1, "led", led_control, "Control LED");
 }
 

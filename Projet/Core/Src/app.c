@@ -6,6 +6,9 @@
  */
 
 #include "app.h"
+#include "motor_control/motor.h"
+#include "user_interface/led.h"
+#include "acquisition/input_analog.h"
 
 #include "user_interface/shell.h"
 
@@ -33,7 +36,7 @@ void init_device(void){
 //
 // Initialisation data acquistion
 	// ANALOG INPUT
-//	input_analog_init();
+	input_analog_init();
 	// ENCODER INPUT
 //	input_encoder_init();
 }
