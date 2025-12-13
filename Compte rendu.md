@@ -241,4 +241,29 @@ float measure_current_polling(void)
 L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, on la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
 > NOTE : Après plusieurs essais, nous observons une erreur constante introduite dans les mesures. Nous modifions donc la méthode de calcul du courant en passant du seuil milieu de 3.3V à un seuil personalisé.
 
-$$$$$$$$$$$$$ SUITE $$$$$$$$$$$
+##### Mesure du courant par DMA  
+
+Nous voulons maintenant mesurer le courant via DMA.  
+
+Nous commençons donc par activer le DMA dans le fichier "_.ioc_".  
+Nous le configurons comme suit :  
+<img width="1010" height="310" alt="image" src="https://github.com/user-attachments/assets/cea492e4-69d9-4b01-aa54-22b9e7945f4a" />  
+
+Nous écrivons enfin le code correspondant à la fonction ```measure_current_DMA``` :   
+```C
+float measure_current_DMA(void)
+{	
+    uint32_t raw;
+    float v_meas, i_meas;
+
+	HAL_ADC_Start_DMA(&hadc1, &raw, sizeof(raw));     // courant en A
+
+    v_meas = ((float)raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
+    i_meas = (v_meas-1.47)/0.05; 
+
+    return i_meas;
+}
+```
+
+### Mesure de vitesse  
+
