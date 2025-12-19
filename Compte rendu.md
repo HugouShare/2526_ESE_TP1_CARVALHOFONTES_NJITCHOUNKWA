@@ -287,9 +287,11 @@ float measure_current_DMA(void)
 L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, via le DMA. On la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
 
 > [!IMPORTANT]
-> DCNOJDCNS
+> Afin de rendre le code modulable entre version DMA et version POLLING, nous passons la variable `uint16_t adc_raw;` en global.   
 
 ### Mesure de vitesse  
+
+Nous voulons maintenant procéder à la mesure de vitesse de notre moteur. Nous allons faire cela via un TIMER en mode ENCODEUR sur notre carte STM32.   
 
 D'après le fichier KiCad, nous obtenons :  
 <img width="791" height="348" alt="image" src="https://github.com/user-attachments/assets/fbf4d4d9-fb88-4b60-9e68-19939e3cce79" />  
@@ -303,24 +305,109 @@ Dans notre cas à nous, nous n'utiliserons que les signaux ENC_A et ENC_B.
 En entrant dans le bloc `Feedback motor enc`, nous observons alors :  
 <img width="390" height="457" alt="image" src="https://github.com/user-attachments/assets/9babda1d-0c41-4819-a1f5-c4351bb5346f" />
 
-Le module que nous utilisons afin de mesurer la vitesse de rotation du moteur est donc le ```MAX3097ECSE+```.  
+Ainsi, le module permettant de réceptionner le signal reçu via le connecteur RS232 et de le transmettre et le mettre en forme pour notre carte STM32 est donc le ```MAX3097ECSE+```.  
 Sa datasheet est fournie dans le dossier _Ressources_.  
 
 D'après le fichier `.ioc` de notre projet, nous obtenons :  
 <img width="549" height="525" alt="image" src="https://github.com/user-attachments/assets/60a170a9-6fc1-40c1-8142-30199defa5a4" />  
-Ainsi, le timer à activer en mode encodeur est le `TIMER 3 -> CH1, CH2 & CH3`.  
+Ainsi, le TIMER à activer en mode encodeur est le `TIMER 3 -> CH1, CH2 & CH3`.  
 
-On configure les trois CHANNELS de la manière suivante :  
+On configure les trois **CHANNELS** de la manière suivante :  
 <img width="692" height="178" alt="image" src="https://github.com/user-attachments/assets/38e46ec0-602d-4c19-9004-cad6b76391af" />  
-Et pour le TIMER :  
-<img width="700" height="446" alt="image" src="https://github.com/user-attachments/assets/7462f3f2-0806-4d58-922e-396e56a67f3d" /> 
-
+Et pour le **TIMER** :  
+<img width="700" height="446" alt="image" src="https://github.com/user-attachments/assets/7462f3f2-0806-4d58-922e-396e56a67f3d" />   
 <img width="534" height="50" alt="image" src="https://github.com/user-attachments/assets/6049fddd-631d-4d51-88c3-aa040a97dce1" />  
 
-<img width="221" height="181" alt="image" src="https://github.com/user-attachments/assets/2b9e5cf9-eacd-4d2e-a477-c5076be6c9dc" />
+##### Configuration d'un TIMER pour mesures à intervalle de temps régulier    
 
+Comme vu durant les séances de TD, la fréquence de mesure idéale au vu des constantes de temps mécaniques de notre moteur est de `f = 100 Hz`, ce qui impose donc une `mesure de vitesse toutes les 10 ms`.  
 
+Afin de faire des mesures de vitesse à intervalle de temps régulier, nous utilisons alors le `TIMER 7` et déclenchons une `mesure de vitesse via sa fonction de Callback`.  
 
+Nous configurons le TIMER 7 comme suit :  
+<img width="711" height="540" alt="image" src="https://github.com/user-attachments/assets/bcea3c50-00b1-4bb2-bcc1-d2c71be4c4a6" />  
+Cela nous permet donc de déclencher la mesure de la vitesse de rotation de notre moteur toutes les 10 ms.  
 
+##### Mesure de la vitesse de rotation de notre moteur      
 
+Suite à cela, nous implémentons alors la fonction `input_encoder_init` permettant d'initialiser le TIMER 3 en mode encodeur, de lancer les interruptions via le TIMER 7 et d'ajouter au shell la fonction `input_encoder_get_speed` permettant d'obtenir la vitesse de rotation de notre moteur.  
+Voici son contenu :  
+```C
+int input_encoder_init (void)
+{
+	if (HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL) != HAL_OK)
+	{
+		return HAL_ERROR;
+	}
+    __HAL_TIM_SET_COUNTER(&htim3, 0);
+    count_prev = 0;
+    HAL_TIM_Base_Start_IT(&htim7);
+    shell_add(&hshell1, "getspeed", input_encoder_get_speed, "Get motor speed");
+    return HAL_OK;
+}
+```
+
+Suite à cela, nous implémentons alors la fonction `input_encoder_get_speed` appelée par le shell lorsque l'utilisateur souhaite obtenir la vitesse de rotation du moteur.  
+Voici son contenu :  
+```C
+int input_encoder_get_speed(h_shell_t* h_shell, int argc, char** argv)
+{
+	int size;
+
+	if(argc!=1)
+	{
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getspeedpolling\r\n");
+		h_shell->drv.transmit(h_shell->print_buffer, size);
+		return HAL_ERROR;
+	}
+
+	size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "measured_speed: %f \n\r", speed_rps);
+	h_shell->drv.transmit(h_shell->print_buffer, size);
+	return HAL_OK;
+}
+```
+
+Pour finir, nous implémentons alors la fonction `measure_speed` appelée au sein de la fonction de mesure de vitesse de rotation du shell.  
+Voici son contenu :  
+```C
+void measure_speed (void)
+{
+    count_now = (int16_t)__HAL_TIM_GET_COUNTER(&htim3);
+
+    int16_t delta = count_now - count_prev;
+
+    /* Gestion wrap-around 16 bits */
+    if (delta > ENCODER_WRAP_DELTA)
+    {
+        delta -= ENCODER_COUNTER_MAX;
+    }
+    else if (delta < -ENCODER_WRAP_DELTA)
+    {
+        delta += ENCODER_COUNTER_MAX;
+    }
+
+    count_prev = count_now;
+
+    // tours par seconde
+    speed_rps = ((float)delta * 2.0f * PI) / (ENCODER_CPR * DT_SEC);
+
+    speed_rpm = speed_rps / 60.0f;
+}
+```
+
+> [!IMPORTANT]
+> Une fois encore, à des fins de practicité de notre code, nous avons décider de rendre les variables `int16_t count_now`, `int16_t count_prev`, `float speed_rpm` et `float speed_rps` globales afin de s'assurer du bon fonctionnment de l'ensemble de notre code.
+
+> [!IMPORTANT]
+> La ligne de code suivante : ```C speed_rps = ((float)delta * 2.0f * PI) / (ENCODER_CPR * DT_SEC);``` mérite, selon moi, une attention particulière.
+> L'idée globale est en fait de multiplier ω = 2*π*f avec f = 1/DT_SEC = 1/10ms par delta/ENCODER_CPR avec delta = count_now - count_prev (correspondant à la différence de valeur du compteur en l'espace de 10 ms) et ENCODER_CPR = 1024 (correspondant au nombre d'impulsions pour un tour complet de l'axe de l'arbre moteur).
+
+Nous téléversons alors le fichier projet sur notre carte STM32 et obtenons alors le résultat suivant :  
+<img width="221" height="181" alt="image" src="https://github.com/user-attachments/assets/2b9e5cf9-eacd-4d2e-a477-c5076be6c9dc" />  
+> [!IMPORTANT]
+> La valeur fournie correspond à la vitesse angulaire en rad/s.  
+
+Le code fonctionne donc bel et bien 😁  
+
+# FIN 
 
