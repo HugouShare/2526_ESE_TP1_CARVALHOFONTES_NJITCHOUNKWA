@@ -314,6 +314,7 @@ Et pour le TIMER :
 
 <img width="534" height="50" alt="image" src="https://github.com/user-attachments/assets/6049fddd-631d-4d51-88c3-aa040a97dce1" />  
 
+<img width="221" height="181" alt="image" src="https://github.com/user-attachments/assets/2b9e5cf9-eacd-4d2e-a477-c5076be6c9dc" />
 
 
 
