@@ -303,6 +303,19 @@ En entrant dans le bloc `Feedback motor enc`, nous observons alors :
 Le module que nous utilisons afin de mesurer la vitesse de rotation du moteur est donc le ```MAX3097ECSE+```.  
 Sa datasheet est fournie dans le dossier _Ressources_.  
 
+D'après le fichier `.ioc` de notre projet, nous obtenons :  
+<img width="549" height="525" alt="image" src="https://github.com/user-attachments/assets/60a170a9-6fc1-40c1-8142-30199defa5a4" />  
+Ainsi, le timer à activer en mode encodeur est le `TIMER 3 -> CH1, CH2 & CH3`.  
+
+On configure les trois CHANNELS de la manière suivante :  
+<img width="692" height="178" alt="image" src="https://github.com/user-attachments/assets/38e46ec0-602d-4c19-9004-cad6b76391af" />  
+Et pour le TIMER :  
+<img width="700" height="446" alt="image" src="https://github.com/user-attachments/assets/7462f3f2-0806-4d58-922e-396e56a67f3d" />  
+<img width="534" height="50" alt="image" src="https://github.com/user-attachments/assets/6049fddd-631d-4d51-88c3-aa040a97dce1" />  
+
+
+
+
 
 
 
