@@ -1,6 +1,6 @@
 # Rapport de TP  
 
-Lien vers le sujet de TP : [Sujet de TP](https://moodle.ensea.fr/mod/book/view.php?id=27299&chapterid=476)   
+Lien vers le sujet de TP : [sujet de TP](https://moodle.ensea.fr/mod/book/view.php?id=27299&chapterid=476)   
 
 ## Général  
 
@@ -69,7 +69,7 @@ Nous configurons donc le fichier .ioc en apportant les modifications suivantes :
   - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone 1 et la valeur à inscrire est donc bien **29**  
 ```  
 
-Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 60%.  
+Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 50%.  
 Les fonctions utiles sont donc les suivantes :  
 - ```motor_init()``` : permet de lancer les TIMERs en mode PWM et PWMN, ainsi que d'établir une commande complémentaire décalée avec un rapport de cyclique de 50%
 - ```motor_rapport_cyclique_50()``` : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 50%   
@@ -95,7 +95,7 @@ Pour ce faire, nous ajoutons les fonctions suivantes :
 - ```motor_control(int SET_CCR)``` : permet de configurer la valeur de CCR1 et par conséquent celle de CCR2 via la relation ARR = CCR1 + CCR2
 - ```int motor_set_ccr(h_shell_t* h_shell, int argc, char** argv)``` : fonction appelée via le shell et permettant de configurer la valeur de CCR
 
-Dans les grandes lignes, le fonctionnement de la fonction motor_set_ccr est le suivant :  
+Dans les grandes lignes, le fonctionnement de la fonction `motor_set_ccr` est le suivant :  
 - 1 : on vérifie que deux arguments ont bien été donnés lors de l'appel à cette fonction
 - 2 : si la valeur de CCR indiquée est trop grande, on modifie CCR à la valeur maximale en l'indiquant à l'utilisateur
 - 3 : si la valeur de CCR indiquée est inférieure à 0, on n'apporte aucune modification en l'indiquant à l'utilisateur
@@ -179,7 +179,8 @@ I_mes = (V_mes-1.65)/0.05
 De fait : 
 - Le capteur fonctionne de manière linéaire entre la tension mesurée et le courant mesuré.
 - La plage de fonctionnement du capteur est [0;3.3V]. Nous prenons donc la moitié de cette plage de fonctionnement : 1.65V.
-- Le coefficient de proportionnalité vaut Sn = 0.05 V/A
+- Le coefficient de proportionnalité vaut Sn = 0.05 V/A.
+
 D'où la fonction de transfert donnée.
 
 D'après le fichier KiCad, nous obtenons les informations suivantes :  
@@ -199,19 +200,18 @@ int	input_analog_init(void)
     }
     shell_add(&hshell1, "getcurrent", input_analog_get_current, "Get current");
     return HAL_OK;
-
 }
 ```
 
-Afin de pouvoir déclencher une mesure de courant depuis le shell immédiatement, nous créons ensuite la fonction ```input_analog_get_current``` :  
+Afin de pouvoir déclencher une mesure de courant par polling depuis le shell immédiatement, nous créons ensuite la fonction ```input_analog_get_current_polling``` :  
 ```C
-int input_analog_get_current(h_shell_t* h_shell, int argc, char** argv)
+int input_analog_get_current_polling(h_shell_t* h_shell, int argc, char** argv)
 {
 	int size;
 
 	if(argc!=1)
 	{
-		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrent\r\n");
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrentpolling\r\n");
 		h_shell->drv.transmit(h_shell->print_buffer, size);
 		return HAL_ERROR;
 	}
@@ -223,23 +223,22 @@ int input_analog_get_current(h_shell_t* h_shell, int argc, char** argv)
 }
 ```
 
-Pour finir, afin de réaliser une mesure de courant via l'ADC nous écrivons la fonction ```measure_current_polling``` :  
+Pour finir, afin de réaliser une mesure de courant via l'ADC en mode **POLLING** nous écrivons la fonction ```measure_current_polling``` :  
 ```C
 float measure_current_polling(void)
 {
-    uint32_t raw;
     float v_meas, i_meas;
 
-    raw = HAL_ADC_GetValue(&hadc1);
+    adc_raw = HAL_ADC_GetValue(&hadc1);
 
-    v_meas = ((float)raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
+    v_meas = ((float)adc_raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
     i_meas = (v_meas-1.47)/0.05;                      // courant en A
 
     return i_meas;
 }
-```
+```  
 L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, on la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
-> NOTE : Après plusieurs essais, nous observons une erreur constante introduite dans les mesures. Nous modifions donc la méthode de calcul du courant en passant du seuil milieu de 3.3V à un seuil personalisé.
+> NOTE : Après plusieurs essais, nous observons une erreur constante introduite dans les mesures. Nous modifions donc la méthode de calcul du courant en passant du seuil milieu de 3.3V à un seuil personalisé.  
 
 ##### Mesure du courant par DMA  
 
@@ -249,21 +248,165 @@ Nous commençons donc par activer le DMA dans le fichier "_.ioc_".
 Nous le configurons comme suit :  
 <img width="1010" height="310" alt="image" src="https://github.com/user-attachments/assets/cea492e4-69d9-4b01-aa54-22b9e7945f4a" />  
 
-Nous écrivons enfin le code correspondant à la fonction ```measure_current_DMA``` :   
+Afin de pouvoir déclencher une mesure de courant en DMA depuis le shell immédiatement, nous implémentons alors la fonction ```input_analog_get_current_DMA``` :  
+```C
+int input_analog_get_current_DMA(h_shell_t* h_shell, int argc, char** argv)
+{
+	int size;
+
+	if(argc!=1)
+	{
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrentdma\r\n");
+		h_shell->drv.transmit(h_shell->print_buffer, size);
+		return HAL_ERROR;
+	}
+
+	float measured_current = measure_current_DMA();
+	size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "measured_current: %f \n\r", measured_current);
+	h_shell->drv.transmit(h_shell->print_buffer, size);
+	return HAL_OK;
+}
+```  
+
+Pour finir, afin de réaliser une mesure de courant via l'ADC en mode **DMA** nous écrivons la fonction ```measure_current_DMA``` :  
 ```C
 float measure_current_DMA(void)
-{	
-    uint32_t raw;
+{
     float v_meas, i_meas;
 
-	HAL_ADC_Start_DMA(&hadc1, &raw, sizeof(raw));     // courant en A
+    if (!adc_ready)
+        return 0.0f;
+    adc_ready = 0;
 
-    v_meas = ((float)raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
-    i_meas = (v_meas-1.47)/0.05; 
+    v_meas = ((float)adc_raw / ADC_RESOLUTION) * VREF;
+    i_meas = (v_meas - 1.47f) / 0.05f;
 
     return i_meas;
 }
-```
+```  
+L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, via le DMA. On la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
+
+> [!IMPORTANT]
+> Afin de rendre le code modulable entre version DMA et version POLLING, nous passons la variable `uint16_t adc_raw;` en global.   
 
 ### Mesure de vitesse  
 
+Nous voulons maintenant procéder à la mesure de vitesse de notre moteur. Nous allons faire cela via un TIMER en mode ENCODEUR sur notre carte STM32.   
+
+D'après le fichier KiCad, nous obtenons :  
+<img width="791" height="348" alt="image" src="https://github.com/user-attachments/assets/fbf4d4d9-fb88-4b60-9e68-19939e3cce79" />  
+Les encodeurs à utiliser sont donc :  
+- ENC_A => situé en `PA6`
+- ENC_B => situé en `PA4`
+- ENC_Z => situé en `PC8` 
+
+Dans notre cas à nous, nous n'utiliserons que les signaux ENC_A et ENC_B.
+
+En entrant dans le bloc `Feedback motor enc`, nous observons alors :  
+<img width="390" height="457" alt="image" src="https://github.com/user-attachments/assets/9babda1d-0c41-4819-a1f5-c4351bb5346f" />
+
+Ainsi, le module permettant de réceptionner le signal reçu via le connecteur RS232 et de le transmettre et le mettre en forme pour notre carte STM32 est donc le ```MAX3097ECSE+```.  
+Sa datasheet est fournie dans le dossier _Ressources_.  
+
+D'après le fichier `.ioc` de notre projet, nous obtenons :  
+<img width="549" height="525" alt="image" src="https://github.com/user-attachments/assets/60a170a9-6fc1-40c1-8142-30199defa5a4" />  
+Ainsi, le TIMER à activer en mode encodeur est le `TIMER 3 -> CH1, CH2 & CH3`.  
+
+On configure les trois **CHANNELS** de la manière suivante :  
+<img width="692" height="178" alt="image" src="https://github.com/user-attachments/assets/38e46ec0-602d-4c19-9004-cad6b76391af" />  
+Et pour le **TIMER** :  
+<img width="700" height="446" alt="image" src="https://github.com/user-attachments/assets/7462f3f2-0806-4d58-922e-396e56a67f3d" />   
+<img width="534" height="50" alt="image" src="https://github.com/user-attachments/assets/6049fddd-631d-4d51-88c3-aa040a97dce1" />  
+
+##### Configuration d'un TIMER pour mesures à intervalle de temps régulier    
+
+Comme vu durant les séances de TD, la fréquence de mesure idéale au vu des constantes de temps mécaniques de notre moteur est de `f = 100 Hz`, ce qui impose donc une `mesure de vitesse toutes les 10 ms`.  
+
+Afin de faire des mesures de vitesse à intervalle de temps régulier, nous utilisons alors le `TIMER 7` et déclenchons une `mesure de vitesse via sa fonction de Callback`.  
+
+Nous configurons le TIMER 7 comme suit :  
+<img width="711" height="540" alt="image" src="https://github.com/user-attachments/assets/bcea3c50-00b1-4bb2-bcc1-d2c71be4c4a6" />  
+Cela nous permet donc de déclencher la mesure de la vitesse de rotation de notre moteur toutes les 10 ms.  
+
+##### Mesure de la vitesse de rotation de notre moteur      
+
+Suite à cela, nous implémentons alors la fonction `input_encoder_init` permettant d'initialiser le TIMER 3 en mode encodeur, de lancer les interruptions via le TIMER 7 et d'ajouter au shell la fonction `input_encoder_get_speed` permettant d'obtenir la vitesse de rotation de notre moteur.  
+Voici son contenu :  
+```C
+int input_encoder_init (void)
+{
+	if (HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL) != HAL_OK)
+	{
+		return HAL_ERROR;
+	}
+    __HAL_TIM_SET_COUNTER(&htim3, 0);
+    count_prev = 0;
+    HAL_TIM_Base_Start_IT(&htim7);
+    shell_add(&hshell1, "getspeed", input_encoder_get_speed, "Get motor speed");
+    return HAL_OK;
+}
+```
+
+Suite à cela, nous implémentons alors la fonction `input_encoder_get_speed` appelée par le shell lorsque l'utilisateur souhaite obtenir la vitesse de rotation du moteur.  
+Voici son contenu :  
+```C
+int input_encoder_get_speed(h_shell_t* h_shell, int argc, char** argv)
+{
+	int size;
+
+	if(argc!=1)
+	{
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getspeedpolling\r\n");
+		h_shell->drv.transmit(h_shell->print_buffer, size);
+		return HAL_ERROR;
+	}
+
+	size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "measured_speed: %f \n\r", speed_rps);
+	h_shell->drv.transmit(h_shell->print_buffer, size);
+	return HAL_OK;
+}
+```
+
+Pour finir, nous implémentons alors la fonction `measure_speed` appelée au sein de la fonction de mesure de vitesse de rotation du shell.  
+Voici son contenu :  
+```C
+void measure_speed (void)
+{
+    count_now = (int16_t)__HAL_TIM_GET_COUNTER(&htim3);
+
+    int16_t delta = count_now - count_prev;
+
+    /* Gestion wrap-around 16 bits */
+    if (delta > ENCODER_WRAP_DELTA)
+    {
+        delta -= ENCODER_COUNTER_MAX;
+    }
+    else if (delta < -ENCODER_WRAP_DELTA)
+    {
+        delta += ENCODER_COUNTER_MAX;
+    }
+
+    count_prev = count_now;
+
+    // tours par seconde
+    speed_rps = ((float)delta * 2.0f * PI) / (ENCODER_CPR * DT_SEC);
+
+    speed_rpm = speed_rps / 60.0f;
+}
+```
+
+> [!IMPORTANT]
+> Une fois encore, à des fins de practicité de notre code, nous avons décider de rendre les variables `int16_t count_now`, `int16_t count_prev`, `float speed_rpm` et `float speed_rps` globales afin de s'assurer du bon fonctionnment de l'ensemble de notre code.
+
+> [!IMPORTANT]
+> La ligne de code suivante : ```C speed_rps = ((float)delta * 2.0f * PI) / (ENCODER_CPR * DT_SEC);``` mérite, selon moi, une attention particulière.
+> L'idée globale est en fait de multiplier ω = 2*π*f avec f = 1/DT_SEC = 1/10ms par delta/ENCODER_CPR avec delta = count_now - count_prev (correspondant à la différence de valeur du compteur en l'espace de 10 ms) et ENCODER_CPR = 1024 (correspondant au nombre d'impulsions pour un tour complet de l'axe de l'arbre moteur).
+
+Nous téléversons alors le fichier projet sur notre carte STM32 et obtenons alors, en faisant varier la vitesse de rotation de notre moteur, le résultat suivant :  
+<img width="221" height="181" alt="image" src="https://github.com/user-attachments/assets/2b9e5cf9-eacd-4d2e-a477-c5076be6c9dc" />  
+> [!IMPORTANT]
+> La valeur fournie correspond à la vitesse angulaire en rad/s.  
+
+Le code fonctionne donc bel et bien et les mesures de courant et de vitesse de rotation de notre moteur sont donc effectives ! 😁  
+
+## FIN  
