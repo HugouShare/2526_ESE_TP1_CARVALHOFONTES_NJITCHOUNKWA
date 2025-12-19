@@ -1,6 +1,6 @@
 # Rapport de TP  
 
-Lien vers le sujet de TP : [Sujet de TP](https://moodle.ensea.fr/mod/book/view.php?id=27299&chapterid=476)   
+Lien vers le sujet de TP : [sujet de TP](https://moodle.ensea.fr/mod/book/view.php?id=27299&chapterid=476)   
 
 ## Général  
 
@@ -69,7 +69,7 @@ Nous configurons donc le fichier .ioc en apportant les modifications suivantes :
   - Le registre BDTR.DTG fonctionnant selon 4 zones, nous sommes bien dans la zone 1 et la valeur à inscrire est donc bien **29**  
 ```  
 
-Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 60%.  
+Nous écrivons maintenant le code C permettant de générer une PWM avec un rapport cyclique de 50%.  
 Les fonctions utiles sont donc les suivantes :  
 - ```motor_init()``` : permet de lancer les TIMERs en mode PWM et PWMN, ainsi que d'établir une commande complémentaire décalée avec un rapport de cyclique de 50%
 - ```motor_rapport_cyclique_50()``` : permet de générer quatres PWMs en complémentaires décalées avec un rapport cyclique de 50%   
@@ -95,7 +95,7 @@ Pour ce faire, nous ajoutons les fonctions suivantes :
 - ```motor_control(int SET_CCR)``` : permet de configurer la valeur de CCR1 et par conséquent celle de CCR2 via la relation ARR = CCR1 + CCR2
 - ```int motor_set_ccr(h_shell_t* h_shell, int argc, char** argv)``` : fonction appelée via le shell et permettant de configurer la valeur de CCR
 
-Dans les grandes lignes, le fonctionnement de la fonction motor_set_ccr est le suivant :  
+Dans les grandes lignes, le fonctionnement de la fonction `motor_set_ccr` est le suivant :  
 - 1 : on vérifie que deux arguments ont bien été donnés lors de l'appel à cette fonction
 - 2 : si la valeur de CCR indiquée est trop grande, on modifie CCR à la valeur maximale en l'indiquant à l'utilisateur
 - 3 : si la valeur de CCR indiquée est inférieure à 0, on n'apporte aucune modification en l'indiquant à l'utilisateur
