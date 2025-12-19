@@ -25,5 +25,5 @@
 ## 🎯 Organisation du repository
 Vous trouverez, dans le repository, différents dossiers avec :
 - "_Ressources_" : les sujets et documents fournis par le professeur pour le TP
-- "_Livrables_" : les fichiers générés ou utilisés par nous-même durant le TP
+- "_Projet_" : le fichier de projet STM32 sur lequel nous avons travaillé durant le TP
 - "_Compte rendu_" : un fichier markdown servant de rapport de TP
