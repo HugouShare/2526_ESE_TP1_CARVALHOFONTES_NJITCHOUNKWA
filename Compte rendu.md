@@ -288,3 +288,21 @@ L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, via 
 
 ### Mesure de vitesse  
 
+D'après le fichier KiCad, nous obtenons :  
+<img width="791" height="348" alt="image" src="https://github.com/user-attachments/assets/fbf4d4d9-fb88-4b60-9e68-19939e3cce79" />  
+Les encodeurs à utiliser sont donc :  
+- ENC_A => situé en `PA6`
+- ENC_B => situé en `PA4`
+- ENC_Z => situé en `PC8` 
+
+Dans notre cas à nous, nous n'utiliserons que les signaux ENC_A et ENC_B.
+
+En entrant dans le bloc `Feedback motor enc`, nous observons alors :  
+<img width="390" height="457" alt="image" src="https://github.com/user-attachments/assets/9babda1d-0c41-4819-a1f5-c4351bb5346f" />
+
+Le module que nous utilisons afin de mesurer la vitesse de rotation du moteur est donc le ```MAX3097ECSE+```.  
+Sa datasheet est fournie dans le dossier _Ressources_.  
+
+
+
+
