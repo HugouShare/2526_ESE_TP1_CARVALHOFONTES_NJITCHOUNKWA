@@ -402,12 +402,11 @@ void measure_speed (void)
 > La ligne de code suivante : ```C speed_rps = ((float)delta * 2.0f * PI) / (ENCODER_CPR * DT_SEC);``` mérite, selon moi, une attention particulière.
 > L'idée globale est en fait de multiplier ω = 2*π*f avec f = 1/DT_SEC = 1/10ms par delta/ENCODER_CPR avec delta = count_now - count_prev (correspondant à la différence de valeur du compteur en l'espace de 10 ms) et ENCODER_CPR = 1024 (correspondant au nombre d'impulsions pour un tour complet de l'axe de l'arbre moteur).
 
-Nous téléversons alors le fichier projet sur notre carte STM32 et obtenons alors le résultat suivant :  
+Nous téléversons alors le fichier projet sur notre carte STM32 et obtenons alors, en faisant varier la vitesse de rotation de notre moteur, le résultat suivant :  
 <img width="221" height="181" alt="image" src="https://github.com/user-attachments/assets/2b9e5cf9-eacd-4d2e-a477-c5076be6c9dc" />  
 > [!IMPORTANT]
 > La valeur fournie correspond à la vitesse angulaire en rad/s.  
 
-Le code fonctionne donc bel et bien 😁  
+Le code fonctionne donc bel et bien et les mesures de courant et de vitesse de rotation de notre moteur sont donc effectives ! 😁  
 
-# FIN 
-
+## FIN  
