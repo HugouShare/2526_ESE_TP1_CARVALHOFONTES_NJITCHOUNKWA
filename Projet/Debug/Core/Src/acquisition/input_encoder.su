@@ -1,0 +1,3 @@
+../Core/Src/acquisition/input_encoder.c:26:5:input_encoder_init	8	static
+../Core/Src/acquisition/input_encoder.c:39:6:measure_speed	16	static
+../Core/Src/acquisition/input_encoder.c:63:5:input_encoder_get_speed	48	static

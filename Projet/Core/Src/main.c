@@ -96,6 +96,7 @@ int main(void)
   MX_TIM3_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 	init_device();
 
@@ -178,6 +179,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM6)
   {
     HAL_IncTick();
+  }
+  if (htim->Instance == TIM7)
+  {
+    measure_speed();
   }
   /* USER CODE BEGIN Callback 1 */
 

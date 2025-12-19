@@ -1,3 +1,6 @@
-../Core/Src/acquisition/input_analog.c:18:5:input_analog_init	8	static
-../Core/Src/acquisition/input_analog.c:29:7:measure_current_polling	24	static
-../Core/Src/acquisition/input_analog.c:43:5:input_analog_get_current	48	static
+../Core/Src/acquisition/input_analog.c:21:5:input_analog_init	8	static
+../Core/Src/acquisition/input_analog.c:34:7:measure_current_polling	16	static
+../Core/Src/acquisition/input_analog.c:46:7:measure_current_DMA	16	static
+../Core/Src/acquisition/input_analog.c:60:5:input_analog_get_current_polling	48	static
+../Core/Src/acquisition/input_analog.c:77:5:input_analog_get_current_DMA	48	static
+../Core/Src/acquisition/input_analog.c:94:6:HAL_ADC_ConvCpltCallback	16	static
