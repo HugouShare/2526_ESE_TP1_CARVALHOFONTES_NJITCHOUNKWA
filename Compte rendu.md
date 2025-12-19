@@ -179,7 +179,8 @@ I_mes = (V_mes-1.65)/0.05
 De fait : 
 - Le capteur fonctionne de manière linéaire entre la tension mesurée et le courant mesuré.
 - La plage de fonctionnement du capteur est [0;3.3V]. Nous prenons donc la moitié de cette plage de fonctionnement : 1.65V.
-- Le coefficient de proportionnalité vaut Sn = 0.05 V/A
+- Le coefficient de proportionnalité vaut Sn = 0.05 V/A.
+
 D'où la fonction de transfert donnée.
 
 D'après le fichier KiCad, nous obtenons les informations suivantes :  
@@ -199,19 +200,18 @@ int	input_analog_init(void)
     }
     shell_add(&hshell1, "getcurrent", input_analog_get_current, "Get current");
     return HAL_OK;
-
 }
 ```
 
-Afin de pouvoir déclencher une mesure de courant depuis le shell immédiatement, nous créons ensuite la fonction ```input_analog_get_current``` :  
+Afin de pouvoir déclencher une mesure de courant par polling depuis le shell immédiatement, nous créons ensuite la fonction ```input_analog_get_current_polling``` :  
 ```C
-int input_analog_get_current(h_shell_t* h_shell, int argc, char** argv)
+int input_analog_get_current_polling(h_shell_t* h_shell, int argc, char** argv)
 {
 	int size;
 
 	if(argc!=1)
 	{
-		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrent\r\n");
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrentpolling\r\n");
 		h_shell->drv.transmit(h_shell->print_buffer, size);
 		return HAL_ERROR;
 	}
@@ -227,19 +227,18 @@ Pour finir, afin de réaliser une mesure de courant via l'ADC en mode **POLLING*
 ```C
 float measure_current_polling(void)
 {
-    uint32_t raw;
     float v_meas, i_meas;
 
-    raw = HAL_ADC_GetValue(&hadc1);
+    adc_raw = HAL_ADC_GetValue(&hadc1);
 
-    v_meas = ((float)raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
+    v_meas = ((float)adc_raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
     i_meas = (v_meas-1.47)/0.05;                      // courant en A
 
     return i_meas;
 }
-```
+```  
 L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, on la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
-> NOTE : Après plusieurs essais, nous observons une erreur constante introduite dans les mesures. Nous modifions donc la méthode de calcul du courant en passant du seuil milieu de 3.3V à un seuil personalisé.
+> NOTE : Après plusieurs essais, nous observons une erreur constante introduite dans les mesures. Nous modifions donc la méthode de calcul du courant en passant du seuil milieu de 3.3V à un seuil personalisé.  
 
 ##### Mesure du courant par DMA  
 
@@ -249,15 +248,15 @@ Nous commençons donc par activer le DMA dans le fichier "_.ioc_".
 Nous le configurons comme suit :  
 <img width="1010" height="310" alt="image" src="https://github.com/user-attachments/assets/cea492e4-69d9-4b01-aa54-22b9e7945f4a" />  
 
-Afin de pouvoir déclencher une mesure de courant depuis le shell immédiatement, nous modifions alors la fonction ```input_analog_get_current``` afin de l'adapter à la version DMA :  
+Afin de pouvoir déclencher une mesure de courant en DMA depuis le shell immédiatement, nous implémentons alors la fonction ```input_analog_get_current_DMA``` :  
 ```C
-int input_analog_get_current(h_shell_t* h_shell, int argc, char** argv)
+int input_analog_get_current_DMA(h_shell_t* h_shell, int argc, char** argv)
 {
 	int size;
 
 	if(argc!=1)
 	{
-		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrent\r\n");
+		size = snprintf(h_shell->print_buffer, SHELL_PRINT_BUFFER_SIZE, "Need 1 argument : getcurrentdma\r\n");
 		h_shell->drv.transmit(h_shell->print_buffer, size);
 		return HAL_ERROR;
 	}
@@ -272,19 +271,23 @@ int input_analog_get_current(h_shell_t* h_shell, int argc, char** argv)
 Pour finir, afin de réaliser une mesure de courant via l'ADC en mode **DMA** nous écrivons la fonction ```measure_current_DMA``` :  
 ```C
 float measure_current_DMA(void)
-{	
-    uint32_t raw;
+{
     float v_meas, i_meas;
 
-	HAL_ADC_Start_DMA(&hadc1, &raw, sizeof(raw));     // courant en A
+    if (!adc_ready)
+        return 0.0f;
+    adc_ready = 0;
 
-    v_meas = ((float)raw / ADC_RESOLUTION) * VREF;    // tension lue par l'ADC
-    i_meas = (v_meas-1.47)/0.05; 
+    v_meas = ((float)adc_raw / ADC_RESOLUTION) * VREF;
+    i_meas = (v_meas - 1.47f) / 0.05f;
 
     return i_meas;
 }
 ```  
 L'idée est alors la suivante : on récupère la valeur mesurée par l'ADC, via le DMA. On la transforme en une valeur de tension et on en déduit, via la fonction de transfert du capteur fournie précédemment, la valeur du courant mesuré.  
+
+> [!IMPORTANT]
+> DCNOJDCNS
 
 ### Mesure de vitesse  
 
